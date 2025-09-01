@@ -1,0 +1,362 @@
+/* Custom CSS for Quantum-Safe Cryptography Dashboard */
+
+:root {
+    --primary-color: #0d6efd;
+    --secondary-color: #6c757d;
+    --success-color: #198754;
+    --info-color: #0dcaf0;
+    --warning-color: #ffc107;
+    --danger-color: #dc3545;
+    --light-color: #f8f9fa;
+    --dark-color: #212529;
+}
+
+body {
+    background-color: #f8f9fa;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.navbar-brand {
+    font-weight: bold;
+    font-size: 1.25rem;
+}
+
+.navbar-brand i {
+    margin-right: 8px;
+}
+
+.card {
+    border: none;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    border-radius: 0.5rem;
+    transition: box-shadow 0.3s ease;
+}
+
+.card:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.card-header {
+    background-color: #fff;
+    border-bottom: 1px solid #e9ecef;
+    font-weight: 600;
+    border-radius: 0.5rem 0.5rem 0 0 !important;
+}
+
+.stat-card {
+    transition: transform 0.2s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+}
+
+.activity-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 18px;
+}
+
+.activity-icon.bg-success {
+    background-color: var(--success-color);
+}
+
+.activity-icon.bg-info {
+    background-color: var(--info-color);
+}
+
+.activity-icon.bg-warning {
+    background-color: var(--warning-color);
+    color: var(--dark-color);
+}
+
+.activity-icon.bg-danger {
+    background-color: var(--danger-color);
+}
+
+.activity-item {
+    padding: 15px 0;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.activity-item:last-child {
+    border-bottom: none;
+}
+
+.status-item {
+    padding: 10px 0;
+}
+
+.algorithm-badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+}
+
+.algorithm-badge.classical {
+    background-color: var(--primary-color);
+}
+
+.algorithm-badge.post-quantum {
+    background-color: var(--success-color);
+}
+
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.spinner-border {
+    width: 3rem;
+    height: 3rem;
+}
+
+/* Key pair table styling */
+.table th {
+    border-top: none;
+    background-color: var(--light-color);
+    font-weight: 600;
+}
+
+.table td {
+    vertical-align: middle;
+}
+
+.key-preview {
+    font-family: 'Courier New', monospace;
+    font-size: 0.85rem;
+    color: var(--secondary-color);
+}
+
+/* Signature card styling */
+.signature-card {
+    border-left: 4px solid var(--primary-color);
+}
+
+.signature-card.verified {
+    border-left-color: var(--success-color);
+}
+
+.signature-card.invalid {
+    border-left-color: var(--danger-color);
+}
+
+/* Certificate styling */
+.certificate-card {
+    border-left: 4px solid var(--info-color);
+}
+
+.certificate-card.expired {
+    border-left-color: var(--warning-color);
+}
+
+.certificate-card.invalid {
+    border-left-color: var(--danger-color);
+}
+
+/* Benchmark chart styling */
+.benchmark-chart {
+    position: relative;
+    height: 400px;
+}
+
+.benchmark-table th,
+.benchmark-table td {
+    text-align: center;
+}
+
+.performance-good {
+    color: var(--success-color);
+    font-weight: bold;
+}
+
+.performance-medium {
+    color: var(--warning-color);
+    font-weight: bold;
+}
+
+.performance-poor {
+    color: var(--danger-color);
+    font-weight: bold;
+}
+
+/* Button styling */
+.btn {
+    border-radius: 0.375rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.btn-outline-primary:hover,
+.btn-outline-success:hover,
+.btn-outline-info:hover,
+.btn-outline-warning:hover,
+.btn-outline-danger:hover {
+    transform: translateY(-1px);
+}
+
+/* Form styling */
+.form-control,
+.form-select {
+    border-radius: 0.375rem;
+    border: 1px solid #ced4da;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+/* Algorithm type badges */
+.algorithm-type {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.algorithm-type.classical {
+    background-color: #e3f2fd;
+    color: #1565c0;
+}
+
+.algorithm-type.post-quantum {
+    background-color: #e8f5e8;
+    color: #2e7d32;
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+    .stat-card .card-body {
+        text-align: center;
+    }
+    
+    .activity-icon {
+        width: 35px;
+        height: 35px;
+        font-size: 16px;
+    }
+    
+    .table-responsive {
+        font-size: 0.9rem;
+    }
+    
+    .btn {
+        font-size: 0.9rem;
+    }
+}
+
+/* Animation for card appearances */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.card {
+    animation: fadeInUp 0.5s ease-out;
+}
+
+/* Progress bars for benchmarks */
+.progress {
+    height: 8px;
+    border-radius: 4px;
+}
+
+.progress-bar {
+    border-radius: 4px;
+}
+
+/* Code blocks */
+.code-block {
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 0.375rem;
+    padding: 1rem;
+    font-family: 'Courier New', monospace;
+    font-size: 0.85rem;
+    overflow-x: auto;
+}
+
+/* Success/Error states */
+.success-state {
+    border-left: 4px solid var(--success-color);
+    background-color: #f0f9f0;
+}
+
+.error-state {
+    border-left: 4px solid var(--danger-color);
+    background-color: #fdf2f2;
+}
+
+.warning-state {
+    border-left: 4px solid var(--warning-color);
+    background-color: #fffdf0;
+}
+
+/* Chart containers */
+.chart-container {
+    position: relative;
+    height: 300px;
+    margin: 20px 0;
+}
+
+/* Dropdown menus */
+.dropdown-menu {
+    border-radius: 0.5rem;
+    border: none;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.dropdown-item {
+    border-radius: 0.375rem;
+    margin: 2px 8px;
+    transition: background-color 0.2s ease;
+}
+
+.dropdown-item:hover {
+    background-color: var(--light-color);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #a1a1a1;
+}

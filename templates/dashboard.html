@@ -1,0 +1,385 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Quantum-Safe Cryptography{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="h2 mb-4">
+            <i class="bi bi-speedometer2"></i>
+            Quantum-Safe Cryptography Dashboard
+        </h1>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title" id="keypair-count">0</h4>
+                        <p class="card-text">Key Pairs</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="bi bi-key fs-1"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title" id="signature-count">0</h4>
+                        <p class="card-text">Signatures</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="bi bi-pen fs-1"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title" id="certificate-count">0</h4>
+                        <p class="card-text">Certificates</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="bi bi-award fs-1"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card bg-warning text-dark">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">13</h4>
+                        <p class="card-text">Algorithms</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="bi bi-cpu fs-1"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Quick Actions -->
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="bi bi-lightning"></i> Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="quickAlgorithm" class="form-label">Algorithm</label>
+                            <select class="form-select" id="quickAlgorithm">
+                                <option value="RSA-PSS-2048">RSA-PSS-2048</option>
+                                <option value="ECDSA-P256">ECDSA-P256</option>
+                                <option value="Ed25519">Ed25519</option>
+                                <option value="Dilithium3" selected>Dilithium3</option>
+                                <option value="Falcon-512">Falcon-512</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-primary w-100" onclick="quickGenerateKeypair()">
+                            <i class="bi bi-key"></i> Generate Key Pair
+                        </button>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="quickMessage" class="form-label">Test Message</label>
+                            <input type="text" class="form-control" id="quickMessage" 
+                                   value="Hello, Quantum-Safe World!" placeholder="Enter message to sign">
+                        </div>
+                        <button class="btn btn-success w-100" onclick="quickSignMessage()" id="quickSignBtn" disabled>
+                            <i class="bi bi-pen"></i> Sign Message
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Algorithm Distribution -->
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="bi bi-pie-chart"></i> Algorithm Distribution</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="algorithmChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <!-- Recent Activity -->
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5><i class="bi bi-clock-history"></i> Recent Activity</h5>
+                <button class="btn btn-outline-primary btn-sm" onclick="refreshActivity()">
+                    <i class="bi bi-arrow-clockwise"></i> Refresh
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="activity-feed" id="activityFeed">
+                    <div class="text-muted text-center py-4">
+                        <i class="bi bi-inbox fs-1"></i>
+                        <p>No recent activity. Start by generating a key pair!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- System Status -->
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="bi bi-shield-check"></i> System Status</h5>
+            </div>
+            <div class="card-body">
+                <div class="status-item mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span>Quantum Backend</span>
+                        <span class="badge bg-warning">Simulation</span>
+                    </div>
+                    <small class="text-muted">OQS library not available</small>
+                </div>
+                
+                <div class="status-item mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span>Classical Crypto</span>
+                        <span class="badge bg-success">Active</span>
+                    </div>
+                    <small class="text-muted">Cryptography library loaded</small>
+                </div>
+                
+                <div class="status-item mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span>Certificate Authority</span>
+                        <span class="badge bg-success">Ready</span>
+                    </div>
+                    <small class="text-muted">Dilithium3 CA initialized</small>
+                </div>
+                
+                <div class="status-item">
+                    <div class="d-flex justify-content-between">
+                        <span>Web Interface</span>
+                        <span class="badge bg-success">Online</span>
+                    </div>
+                    <small class="text-muted">Dashboard active</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentKeypairId = null;
+let algorithmChart = null;
+
+// Initialize dashboard
+document.addEventListener('DOMContentLoaded', function() {
+    refreshStats();
+    initAlgorithmChart();
+    refreshActivity();
+});
+
+function refreshStats() {
+    fetch('/api/dashboard-stats')
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('keypair-count').textContent = data.total_keypairs;
+            document.getElementById('signature-count').textContent = data.total_signatures;
+            document.getElementById('certificate-count').textContent = data.total_certificates;
+            
+            // Update algorithm chart
+            updateAlgorithmChart();
+        })
+        .catch(error => console.error('Error fetching stats:', error));
+}
+
+function initAlgorithmChart() {
+    const ctx = document.getElementById('algorithmChart').getContext('2d');
+    algorithmChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Classical', 'Post-Quantum'],
+            datasets: [{
+                data: [5, 8],
+                backgroundColor: ['#0d6efd', '#198754'],
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+}
+
+function updateAlgorithmChart() {
+    // This would update with actual algorithm usage data
+    // For now, showing static distribution
+}
+
+function quickGenerateKeypair() {
+    const algorithm = document.getElementById('quickAlgorithm').value;
+    showLoading();
+    
+    fetch('/api/generate-keypair', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ algorithm: algorithm })
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideLoading();
+        if (data.success) {
+            currentKeypairId = data.keypair_id;
+            document.getElementById('quickSignBtn').disabled = false;
+            
+            addActivityItem('Generated key pair', `${algorithm} (${data.public_key_size}B public, ${data.private_key_size}B private)`, 'success');
+            refreshStats();
+            
+            showAlert('success', `Key pair generated successfully! Algorithm: ${algorithm}`);
+        } else {
+            showAlert('danger', 'Error generating key pair: ' + data.error);
+        }
+    })
+    .catch(error => {
+        hideLoading();
+        showAlert('danger', 'Network error: ' + error.message);
+    });
+}
+
+function quickSignMessage() {
+    if (!currentKeypairId) {
+        showAlert('warning', 'Please generate a key pair first!');
+        return;
+    }
+    
+    const message = document.getElementById('quickMessage').value;
+    if (!message.trim()) {
+        showAlert('warning', 'Please enter a message to sign!');
+        return;
+    }
+    
+    showLoading();
+    
+    fetch('/api/sign-message', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ 
+            keypair_id: currentKeypairId,
+            message: message 
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideLoading();
+        if (data.success) {
+            addActivityItem('Signed message', `"${message}" (${data.signature_size}B signature)`, 'info');
+            refreshStats();
+            
+            showAlert('success', `Message signed successfully! Signature size: ${data.signature_size} bytes`);
+        } else {
+            showAlert('danger', 'Error signing message: ' + data.error);
+        }
+    })
+    .catch(error => {
+        hideLoading();
+        showAlert('danger', 'Network error: ' + error.message);
+    });
+}
+
+function addActivityItem(action, details, type) {
+    const feed = document.getElementById('activityFeed');
+    
+    // Remove "no activity" message if it exists
+    if (feed.querySelector('.text-muted.text-center')) {
+        feed.innerHTML = '';
+    }
+    
+    const item = document.createElement('div');
+    item.className = 'activity-item mb-3';
+    item.innerHTML = `
+        <div class="d-flex">
+            <div class="flex-shrink-0">
+                <div class="activity-icon bg-${type}">
+                    <i class="bi bi-${type === 'success' ? 'check' : type === 'info' ? 'info' : 'exclamation'}"></i>
+                </div>
+            </div>
+            <div class="flex-grow-1 ms-3">
+                <h6 class="mb-1">${action}</h6>
+                <p class="text-muted mb-0">${details}</p>
+                <small class="text-muted">${new Date().toLocaleTimeString()}</small>
+            </div>
+        </div>
+    `;
+    
+    feed.insertBefore(item, feed.firstChild);
+    
+    // Keep only the latest 5 items
+    while (feed.children.length > 5) {
+        feed.removeChild(feed.lastChild);
+    }
+}
+
+function refreshActivity() {
+    // This would load recent activity from the server
+    // For now, we'll just keep the client-side activity feed
+}
+
+function showAlert(type, message) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    const container = document.querySelector('.container-fluid');
+    container.insertBefore(alertDiv, container.firstChild);
+    
+    // Auto-dismiss after 5 seconds
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 5000);
+}
+</script>
+{% endblock %}

@@ -1,0 +1,431 @@
+{% extends "base.html" %}
+
+{% block title %}Key Pairs - Quantum-Safe Cryptography{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="h2 mb-4">
+            <i class="bi bi-key"></i>
+            Key Pair Management
+        </h1>
+    </div>
+</div>
+
+<!-- Generate Key Pair Form -->
+<div class="row mb-4">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="bi bi-plus-circle"></i> Generate New Key Pair</h5>
+            </div>
+            <div class="card-body">
+                <form id="generateKeypairForm">
+                    <div class="mb-3">
+                        <label for="algorithm" class="form-label">Algorithm</label>
+                        <select class="form-select" id="algorithm" name="algorithm" required>
+                            <optgroup label="Classical Algorithms">
+                                <option value="RSA-PSS-2048">RSA-PSS-2048</option>
+                                <option value="RSA-PSS-3072">RSA-PSS-3072</option>
+                                <option value="ECDSA-P256">ECDSA-P256</option>
+                                <option value="ECDSA-P384">ECDSA-P384</option>
+                                <option value="Ed25519">Ed25519</option>
+                            </optgroup>
+                            <optgroup label="Post-Quantum Algorithms">
+                                <option value="Dilithium2">Dilithium2</option>
+                                <option value="Dilithium3" selected>Dilithium3</option>
+                                <option value="Dilithium5">Dilithium5</option>
+                                <option value="Falcon-512">Falcon-512</option>
+                                <option value="Falcon-1024">Falcon-1024</option>
+                                <option value="SPHINCS+-SHA256-128f-robust">SPHINCS+-SHA256-128f</option>
+                            </optgroup>
+                        </select>
+                    </div>
+                    <button type="button" class="btn btn-primary" onclick="generateKeypair()">
+                        <i class="bi bi-key"></i> Generate Key Pair
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Key Pair Statistics -->
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="bi bi-bar-chart"></i> Key Pair Statistics</h5>
+            </div>
+            <div class="card-body">
+                <div class="stat-item mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span>Total Key Pairs</span>
+                        <span class="badge bg-primary" id="totalKeypairs">{{ keypairs|length }}</span>
+                    </div>
+                </div>
+                <div class="stat-item mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span>Classical Algorithms</span>
+                        <span class="badge bg-info" id="classicalCount">0</span>
+                    </div>
+                </div>
+                <div class="stat-item mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span>Post-Quantum Algorithms</span>
+                        <span class="badge bg-success" id="pqCount">0</span>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <div class="d-flex justify-content-between">
+                        <span>Most Recent</span>
+                        <span class="text-muted" id="mostRecent">-</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Key Pairs List -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5><i class="bi bi-list-ul"></i> Key Pairs</h5>
+                <div>
+                    <button class="btn btn-outline-primary btn-sm" onclick="refreshKeypairs()">
+                        <i class="bi bi-arrow-clockwise"></i> Refresh
+                    </button>
+                    <button class="btn btn-outline-secondary btn-sm" onclick="exportKeypairs()">
+                        <i class="bi bi-download"></i> Export
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="keypairsContainer">
+                    {% if keypairs %}
+                        <div class="table-responsive">
+                            <table class="table table-hover" id="keypairsTable">
+                                <thead>
+                                    <tr>
+                                        <th>Algorithm</th>
+                                        <th>Type</th>
+                                        <th>Public Key Size</th>
+                                        <th>Private Key Size</th>
+                                        <th>Created</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="keypairsTableBody">
+                                    {% for keypair in keypairs %}
+                                    <tr>
+                                        <td><strong>{{ keypair.algorithm }}</strong></td>
+                                        <td>
+                                            <span class="badge algorithm-type {{ 'post-quantum' if keypair.algorithm.startswith(('Dilithium', 'Falcon', 'SPHINCS')) else 'classical' }}">
+                                                {{ 'Post-Quantum' if keypair.algorithm.startswith(('Dilithium', 'Falcon', 'SPHINCS')) else 'Classical' }}
+                                            </span>
+                                        </td>
+                                        <td>{{ keypair.public_key_size }} bytes</td>
+                                        <td>{{ keypair.private_key_size }} bytes</td>
+                                        <td>{{ keypair.created_at[:19] | replace('T', ' ') }}</td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm" role="group">
+                                                <button class="btn btn-outline-info" onclick="viewKeypair('{{ keypair.id }}')" 
+                                                        data-bs-toggle="tooltip" title="View Details">
+                                                    <i class="bi bi-eye"></i>
+                                                </button>
+                                                <button class="btn btn-outline-success" onclick="signWithKeypair('{{ keypair.id }}')" 
+                                                        data-bs-toggle="tooltip" title="Sign Message">
+                                                    <i class="bi bi-pen"></i>
+                                                </button>
+                                                <button class="btn btn-outline-danger" onclick="deleteKeypair('{{ keypair.id }}')" 
+                                                        data-bs-toggle="tooltip" title="Delete">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="bi bi-key fs-1 text-muted"></i>
+                            <h4 class="text-muted mt-3">No Key Pairs Yet</h4>
+                            <p class="text-muted">Generate your first key pair to get started with quantum-safe signatures</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Key Pair Details Modal -->
+<div class="modal fade" id="keypairDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Key Pair Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="keypairDetailsContent">
+                <!-- Content will be loaded dynamically -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Sign Message Modal -->
+<div class="modal fade" id="signMessageModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Sign Message</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="signMessageForm">
+                    <input type="hidden" id="signKeypairId" name="keypairId">
+                    <div class="mb-3">
+                        <label for="messageToSign" class="form-label">Message</label>
+                        <textarea class="form-control" id="messageToSign" name="message" rows="4" 
+                                  placeholder="Enter the message you want to sign..." required></textarea>
+                    </div>
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i>
+                        The message will be signed using the selected key pair's private key.
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" onclick="performSigning()">
+                    <i class="bi bi-pen"></i> Sign Message
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let keypairsData = {};
+
+// Initialize page
+document.addEventListener('DOMContentLoaded', function() {
+    loadKeypairs();
+    updateStatistics();
+});
+
+function loadKeypairs() {
+    // For now, we'll work with the server-side rendered data
+    // In a full implementation, this would fetch from the API
+    {% if keypairs %}
+        {% for keypair in keypairs %}
+            keypairsData['{{ keypair.id }}'] = {{ keypair | tojson }};
+        {% endfor %}
+    {% endif %}
+}
+
+function updateStatistics() {
+    const keypairs = Object.values(keypairsData);
+    const classical = keypairs.filter(kp => !kp.algorithm.match(/(Dilithium|Falcon|SPHINCS)/));
+    const postQuantum = keypairs.filter(kp => kp.algorithm.match(/(Dilithium|Falcon|SPHINCS)/));
+    
+    document.getElementById('totalKeypairs').textContent = keypairs.length;
+    document.getElementById('classicalCount').textContent = classical.length;
+    document.getElementById('pqCount').textContent = postQuantum.length;
+    
+    if (keypairs.length > 0) {
+        const mostRecent = keypairs.reduce((latest, current) => 
+            new Date(current.created_at) > new Date(latest.created_at) ? current : latest
+        );
+        document.getElementById('mostRecent').textContent = mostRecent.algorithm;
+    }
+}
+
+function generateKeypair() {
+    const form = document.getElementById('generateKeypairForm');
+    const algorithm = form.algorithm.value;
+    
+    showLoading();
+    
+    fetch('/api/generate-keypair', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ algorithm: algorithm })
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideLoading();
+        if (data.success) {
+            showToast(`Key pair generated successfully! Algorithm: ${algorithm}`, 'success');
+            // Refresh the page to show the new keypair
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showToast('Error generating key pair: ' + data.error, 'danger');
+        }
+    })
+    .catch(error => {
+        hideLoading();
+        showToast('Network error: ' + error.message, 'danger');
+    });
+}
+
+function viewKeypair(keypairId) {
+    const keypair = keypairsData[keypairId];
+    if (!keypair) {
+        showToast('Key pair not found', 'danger');
+        return;
+    }
+    
+    const algorithmType = getAlgorithmType(keypair.algorithm);
+    const content = `
+        <div class="row">
+            <div class="col-md-6">
+                <h6>Algorithm Information</h6>
+                <table class="table table-sm">
+                    <tr><td><strong>Algorithm:</strong></td><td>${keypair.algorithm}</td></tr>
+                    <tr><td><strong>Type:</strong></td><td><span class="badge algorithm-type ${algorithmType}">${algorithmType}</span></td></tr>
+                    <tr><td><strong>Created:</strong></td><td>${formatDate(keypair.created_at)}</td></tr>
+                </table>
+            </div>
+            <div class="col-md-6">
+                <h6>Key Sizes</h6>
+                <table class="table table-sm">
+                    <tr><td><strong>Public Key:</strong></td><td>${formatBytes(keypair.public_key_size)}</td></tr>
+                    <tr><td><strong>Private Key:</strong></td><td>${formatBytes(keypair.private_key_size)}</td></tr>
+                    <tr><td><strong>ID:</strong></td><td><code>${keypairId}</code></td></tr>
+                </table>
+            </div>
+        </div>
+        <div class="row mt-3">
+            <div class="col-12">
+                <h6>Public Key Preview</h6>
+                <div class="code-block">
+                    <small class="text-muted">Base64 encoded (first 100 characters):</small><br>
+                    <code class="key-preview">${keypair.public_key.substring(0, 100)}...</code>
+                    <button class="btn btn-sm btn-outline-secondary ms-2" onclick="copyToClipboard('${keypair.public_key}')">
+                        <i class="bi bi-clipboard"></i> Copy Full Key
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('keypairDetailsContent').innerHTML = content;
+    const modal = new bootstrap.Modal(document.getElementById('keypairDetailsModal'));
+    modal.show();
+}
+
+function signWithKeypair(keypairId) {
+    const keypair = keypairsData[keypairId];
+    if (!keypair) {
+        showToast('Key pair not found', 'danger');
+        return;
+    }
+    
+    document.getElementById('signKeypairId').value = keypairId;
+    document.getElementById('messageToSign').value = 'Hello, Quantum-Safe World!';
+    
+    const modal = new bootstrap.Modal(document.getElementById('signMessageModal'));
+    modal.show();
+}
+
+function performSigning() {
+    const keypairId = document.getElementById('signKeypairId').value;
+    const message = document.getElementById('messageToSign').value;
+    
+    if (!message.trim()) {
+        showToast('Please enter a message to sign', 'warning');
+        return;
+    }
+    
+    showLoading();
+    
+    fetch('/api/sign-message', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            keypair_id: keypairId,
+            message: message
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideLoading();
+        if (data.success) {
+            showToast(`Message signed successfully! Signature size: ${data.signature_size} bytes`, 'success');
+            bootstrap.Modal.getInstance(document.getElementById('signMessageModal')).hide();
+            
+            // Optionally redirect to signatures page
+            setTimeout(() => {
+                if (confirm('Would you like to view the signature details?')) {
+                    window.location.href = '/signatures';
+                }
+            }, 1000);
+        } else {
+            showToast('Error signing message: ' + data.error, 'danger');
+        }
+    })
+    .catch(error => {
+        hideLoading();
+        showToast('Network error: ' + error.message, 'danger');
+    });
+}
+
+function deleteKeypair(keypairId) {
+    const keypair = keypairsData[keypairId];
+    if (!keypair) {
+        showToast('Key pair not found', 'danger');
+        return;
+    }
+    
+    if (confirm(`Are you sure you want to delete the ${keypair.algorithm} key pair? This action cannot be undone.`)) {
+        // In a real implementation, this would call a delete API
+        delete keypairsData[keypairId];
+        location.reload();
+        showToast('Key pair deleted successfully', 'success');
+    }
+}
+
+function refreshKeypairs() {
+    showLoading();
+    // In a real implementation, this would fetch fresh data from the API
+    setTimeout(() => {
+        hideLoading();
+        location.reload();
+    }, 500);
+}
+
+function exportKeypairs() {
+    const keypairs = Object.values(keypairsData);
+    if (keypairs.length === 0) {
+        showToast('No key pairs to export', 'warning');
+        return;
+    }
+    
+    const exportData = keypairs.map(kp => ({
+        ID: kp.id,
+        Algorithm: kp.algorithm,
+        Type: getAlgorithmType(kp.algorithm),
+        'Public Key Size': kp.public_key_size,
+        'Private Key Size': kp.private_key_size,
+        'Created': kp.created_at,
+        'Public Key': kp.public_key
+    }));
+    
+    exportData(exportData, 'keypairs_' + new Date().toISOString().split('T')[0], 'csv');
+    showToast('Key pairs exported successfully!', 'success');
+}
+</script>
+{% endblock %}

@@ -1,0 +1,406 @@
+{% extends "base.html" %}
+
+{% block title %}Benchmark - Quantum-Safe Cryptography{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="h2 mb-4">
+            <i class="bi bi-graph-up"></i>
+            Performance Benchmark
+        </h1>
+    </div>
+</div>
+
+<!-- Benchmark Controls -->
+<div class="row mb-4">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="bi bi-gear"></i> Benchmark Configuration</h5>
+            </div>
+            <div class="card-body">
+                <form id="benchmarkForm">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="messageSize" class="form-label">Message Size (bytes)</label>
+                            <select class="form-select" id="messageSize" name="messageSize">
+                                <option value="64">64 B (Small)</option>
+                                <option value="512">512 B (Medium)</option>
+                                <option value="1024" selected>1 KB (Standard)</option>
+                                <option value="4096">4 KB (Large)</option>
+                                <option value="16384">16 KB (X-Large)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="iterations" class="form-label">Iterations</label>
+                            <select class="form-select" id="iterations" name="iterations">
+                                <option value="10" selected>10 (Quick)</option>
+                                <option value="50">50 (Standard)</option>
+                                <option value="100">100 (Thorough)</option>
+                                <option value="500">500 (Comprehensive)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <button type="button" class="btn btn-primary" onclick="runBenchmark()">
+                                <i class="bi bi-play-fill"></i> Run Benchmark
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary ms-2" onclick="exportBenchmarkResults()">
+                                <i class="bi bi-download"></i> Export Results
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Stats -->
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="bi bi-speedometer2"></i> Quick Stats</h5>
+            </div>
+            <div class="card-body">
+                <div class="stat-item mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span>Fastest Algorithm</span>
+                        <span class="badge bg-success" id="fastestAlg">-</span>
+                    </div>
+                </div>
+                <div class="stat-item mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span>Smallest Signature</span>
+                        <span class="badge bg-info" id="smallestSig">-</span>
+                    </div>
+                </div>
+                <div class="stat-item mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span>Best PQ Algorithm</span>
+                        <span class="badge bg-warning" id="bestPQ">-</span>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <div class="d-flex justify-content-between">
+                        <span>Last Run</span>
+                        <span class="text-muted" id="lastRun">Never</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Results Section -->
+<div id="benchmarkResults" class="d-none">
+    <!-- Performance Charts -->
+    <div class="row mb-4">
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="bi bi-clock"></i> Key Generation Performance</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="keygenChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="bi bi-pen"></i> Signing Performance</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="signingChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="bi bi-check-circle"></i> Verification Performance</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="verificationChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="bi bi-archive"></i> Signature Sizes</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="signatureSizeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="bi bi-table"></i> Detailed Results</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover benchmark-table" id="benchmarkTable">
+                            <thead>
+                                <tr>
+                                    <th>Algorithm</th>
+                                    <th>Type</th>
+                                    <th>KeyGen (ms)</th>
+                                    <th>Sign (ms)</th>
+                                    <th>Verify (ms)</th>
+                                    <th>Pub Key Size</th>
+                                    <th>Priv Key Size</th>
+                                    <th>Signature Size</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="benchmarkTableBody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- No Results Message -->
+<div id="noBenchmarkResults">
+    <div class="text-center py-5">
+        <i class="bi bi-graph-up fs-1 text-muted"></i>
+        <h4 class="text-muted mt-3">No Benchmark Results Yet</h4>
+        <p class="text-muted">Run a benchmark to see performance comparisons of quantum-safe algorithms</p>
+        <button class="btn btn-primary" onclick="runBenchmark()">
+            <i class="bi bi-play-fill"></i> Run Your First Benchmark
+        </button>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let benchmarkCharts = {};
+let lastBenchmarkResults = null;
+
+function runBenchmark() {
+    const messageSize = parseInt(document.getElementById('messageSize').value);
+    const iterations = parseInt(document.getElementById('iterations').value);
+    
+    showLoading();
+    
+    fetch('/api/benchmark', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            message_size: messageSize,
+            iterations: iterations
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideLoading();
+        if (data.success) {
+            lastBenchmarkResults = data.results;
+            displayBenchmarkResults(data.results);
+            updateQuickStats(data.results);
+            document.getElementById('lastRun').textContent = new Date().toLocaleTimeString();
+            showToast('Benchmark completed successfully!', 'success');
+        } else {
+            showToast('Error running benchmark: ' + data.error, 'danger');
+        }
+    })
+    .catch(error => {
+        hideLoading();
+        showToast('Network error: ' + error.message, 'danger');
+    });
+}
+
+function displayBenchmarkResults(results) {
+    document.getElementById('noBenchmarkResults').classList.add('d-none');
+    document.getElementById('benchmarkResults').classList.remove('d-none');
+    
+    // Clear previous charts
+    Object.values(benchmarkCharts).forEach(chart => chart.destroy());
+    benchmarkCharts = {};
+    
+    // Prepare data for charts
+    const algorithms = Object.keys(results).filter(alg => !results[alg].error);
+    const keygenData = {};
+    const signingData = {};
+    const verificationData = {};
+    const signatureSizeData = {};
+    
+    algorithms.forEach(alg => {
+        const result = results[alg];
+        keygenData[alg] = result.keygen_avg_ms;
+        signingData[alg] = result.sign_avg_ms;
+        verificationData[alg] = result.verify_avg_ms;
+        signatureSizeData[alg] = result.signature_size;
+    });
+    
+    // Create charts
+    benchmarkCharts.keygen = createPerformanceChart('keygenChart', keygenData, 'Key Generation Time (ms)');
+    benchmarkCharts.signing = createPerformanceChart('signingChart', signingData, 'Signing Time (ms)');
+    benchmarkCharts.verification = createPerformanceChart('verificationChart', verificationData, 'Verification Time (ms)');
+    benchmarkCharts.signatureSize = createPerformanceChart('signatureSizeChart', signatureSizeData, 'Signature Size (bytes)');
+    
+    // Populate results table
+    populateBenchmarkTable(results);
+}
+
+function populateBenchmarkTable(results) {
+    const tbody = document.getElementById('benchmarkTableBody');
+    tbody.innerHTML = '';
+    
+    Object.keys(results).forEach(algorithm => {
+        const result = results[algorithm];
+        const row = document.createElement('tr');
+        
+        if (result.error) {
+            row.innerHTML = `
+                <td><strong>${algorithm}</strong></td>
+                <td><span class="badge algorithm-type ${getAlgorithmType(algorithm)}">${getAlgorithmType(algorithm)}</span></td>
+                <td colspan="6" class="text-danger">Error: ${result.error}</td>
+                <td><span class="badge bg-danger">Failed</span></td>
+            `;
+        } else {
+            const algorithmType = getAlgorithmType(algorithm);
+            row.innerHTML = `
+                <td><strong>${algorithm}</strong></td>
+                <td><span class="badge algorithm-type ${algorithmType}">${algorithmType}</span></td>
+                <td class="${getPerformanceClass(result.keygen_avg_ms, 'keygen')}">${result.keygen_avg_ms.toFixed(2)}</td>
+                <td class="${getPerformanceClass(result.sign_avg_ms, 'sign')}">${result.sign_avg_ms.toFixed(2)}</td>
+                <td class="${getPerformanceClass(result.verify_avg_ms, 'verify')}">${result.verify_avg_ms.toFixed(2)}</td>
+                <td>${formatBytes(result.public_key_size)}</td>
+                <td>${formatBytes(result.private_key_size)}</td>
+                <td>${formatBytes(result.signature_size)}</td>
+                <td><span class="badge ${result.verification_success ? 'bg-success' : 'bg-warning'}">${result.verification_success ? 'Success' : 'Warning'}</span></td>
+            `;
+        }
+        
+        tbody.appendChild(row);
+    });
+}
+
+function getPerformanceClass(value, operation) {
+    // Define performance thresholds
+    const thresholds = {
+        keygen: { good: 10, medium: 100 },
+        sign: { good: 5, medium: 50 },
+        verify: { good: 2, medium: 20 }
+    };
+    
+    const threshold = thresholds[operation] || { good: 10, medium: 100 };
+    
+    if (value <= threshold.good) return 'performance-good';
+    if (value <= threshold.medium) return 'performance-medium';
+    return 'performance-poor';
+}
+
+function updateQuickStats(results) {
+    const algorithms = Object.keys(results).filter(alg => !results[alg].error);
+    
+    if (algorithms.length === 0) return;
+    
+    // Find fastest algorithm (by signing time)
+    let fastestAlg = algorithms[0];
+    let fastestTime = results[fastestAlg].sign_avg_ms;
+    
+    algorithms.forEach(alg => {
+        if (results[alg].sign_avg_ms < fastestTime) {
+            fastestAlg = alg;
+            fastestTime = results[alg].sign_avg_ms;
+        }
+    });
+    
+    // Find smallest signature
+    let smallestSigAlg = algorithms[0];
+    let smallestSize = results[smallestSigAlg].signature_size;
+    
+    algorithms.forEach(alg => {
+        if (results[alg].signature_size < smallestSize) {
+            smallestSigAlg = alg;
+            smallestSize = results[alg].signature_size;
+        }
+    });
+    
+    // Find best post-quantum algorithm
+    const pqAlgorithms = algorithms.filter(alg => getAlgorithmType(alg) === 'post-quantum');
+    let bestPQAlg = 'None';
+    
+    if (pqAlgorithms.length > 0) {
+        bestPQAlg = pqAlgorithms[0];
+        let bestPQTime = results[bestPQAlg].sign_avg_ms;
+        
+        pqAlgorithms.forEach(alg => {
+            if (results[alg].sign_avg_ms < bestPQTime) {
+                bestPQAlg = alg;
+                bestPQTime = results[alg].sign_avg_ms;
+            }
+        });
+    }
+    
+    document.getElementById('fastestAlg').textContent = fastestAlg;
+    document.getElementById('smallestSig').textContent = smallestSigAlg;
+    document.getElementById('bestPQ').textContent = bestPQAlg;
+}
+
+function exportBenchmarkResults() {
+    if (!lastBenchmarkResults) {
+        showToast('No benchmark results to export', 'warning');
+        return;
+    }
+    
+    // Convert results to exportable format
+    const exportData = Object.keys(lastBenchmarkResults).map(algorithm => {
+        const result = lastBenchmarkResults[algorithm];
+        return {
+            Algorithm: algorithm,
+            Type: getAlgorithmType(algorithm),
+            'KeyGen (ms)': result.error ? 'Error' : result.keygen_avg_ms.toFixed(2),
+            'Sign (ms)': result.error ? 'Error' : result.sign_avg_ms.toFixed(2),
+            'Verify (ms)': result.error ? 'Error' : result.verify_avg_ms.toFixed(2),
+            'Public Key Size': result.error ? 'Error' : result.public_key_size,
+            'Private Key Size': result.error ? 'Error' : result.private_key_size,
+            'Signature Size': result.error ? 'Error' : result.signature_size,
+            'Status': result.error ? 'Failed' : 'Success',
+            'Error': result.error || ''
+        };
+    });
+    
+    exportData('benchmark_results_' + new Date().toISOString().split('T')[0], exportData, 'csv');
+    showToast('Benchmark results exported successfully!', 'success');
+}
+
+// Initialize page
+document.addEventListener('DOMContentLoaded', function() {
+    {% if results %}
+        lastBenchmarkResults = {{ results|tojson }};
+        displayBenchmarkResults(lastBenchmarkResults);
+        updateQuickStats(lastBenchmarkResults);
+        document.getElementById('lastRun').textContent = 'Previous session';
+    {% endif %}
+});
+</script>
+{% endblock %}
